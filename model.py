@@ -87,8 +87,39 @@ def build_parallel_pendulum_envs(n_envs, mass_range, length_range, gravity_range
 
     return envs, configs
 
-# Step 6 - shape_upright_hold_reward (not yet solved)
-# TODO: implement
+# Step 6 - shape_upright_hold_reward
+def shape_upright_hold_reward(obs, base_reward, action, angle_thresh=0.2, angvel_thresh=0.5, hold_bonus=1.0):
+    """Shape reward with a bonus for holding the pendulum upright and still.
+
+    Args:
+        obs: np.ndarray of shape (3,) or (n, 3) as [cos(theta), sin(theta), theta_dot].
+        base_reward: float or np.ndarray of shape (n,) from the environment.
+        action: float or np.ndarray (accepted for wrapper compatibility).
+        angle_thresh: max absolute angle from upright to count as upright.
+        angvel_thresh: max absolute angular velocity to count as still.
+        hold_bonus: extra reward added when upright and still.
+
+    Returns:
+        Shaped reward with the same shape as base_reward.
+    """
+    # TODO: Add hold_bonus when upright and still; else return base_reward
+    if len(obs.shape) == 1:
+        obs = np.asarray(obs, dtype=float)
+        angle = np.arctan2(obs[1], obs[0])
+        mask = abs(angle) < angle_thresh and abs(obs[2]) < angvel_thresh
+        return base_reward + (hold_bonus * mask.astype(float))
+
+    n = obs.shape[0]
+    out = []
+    for i in range(n):
+        mask_out = []
+        obs[i] = np.asarray(obs[i], dtype=float)
+        angle = np.arctan2(obs[i][1], obs[i][0])
+        mask = abs(angle) < angle_thresh and abs(obs[i][2]) < angvel_thresh
+        mask_out.append(base_reward + (hold_bonus * mask.astype(float)))
+        out.append(mask_out[0][0])
+
+    return out
 
 # Step 7 - build_actor_network (not yet solved)
 # TODO: implement
